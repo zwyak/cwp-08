@@ -11,10 +11,10 @@ function writeFile(){
   const number = Date.now();
   const json = JSON.stringify({number:number});
 
-  fs.appendFile(file, json, (err) => {
+  fs.appendFile(file, json + '\r\n', (err) => {
     if (err) throw err;
     console.log('The "data to append" was appended to file!');
   });
 }
 
-setTimeout(writeFile, x);
+setInterval(writeFile, x);
