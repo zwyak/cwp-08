@@ -24,33 +24,38 @@ const server = net.createServer((client) => {
         });
         workers.push(child);
         client.write(`Process ${child.pid} was started`);
-        client.close();
+        client.destroy();
         break;
       case '/process/list':
         let processList = '';
         workers.forEach((item, i) => {
-          processList += item.pid.toString() + '\r\n'
+          processList += item.pid.toString() + ' '
         });
         client.write(processList);
-        client.close();
+        client.destroy();
         break;
       case '/process/kill':
         let flag = false;
+        let index = 0;
         workers.forEach((item, i) => {
-          if (item.pid == req[1]) flag = true;
+          if (item.pid == req[1]){
+            flag = true;
+            index = i;
+          }
         });
         if (flag == false){
           client.write(`Process ${req[1]} wasn't found`);
-          client.close();
+          client.destroy();
           break;
         }
         process.kill(req[1]);
+        workers.splice(index, 1);
         client.write(`Process ${req[1]} was stoped`);
-        client.close();
+        client.destroy();
         break;
       default:
         client.write('Bad Request');
-        client.close();
+        client.destroy();
         break;
     }
   });

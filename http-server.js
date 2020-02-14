@@ -2,20 +2,13 @@ const http = require('http');
 const net = require('net');
 const sport = 8124;
 
-const client = new net.Socket();
-client.setEncoding('utf8');
-
-client.on('close', function() {
-  console.log('Connection closed');
-});
-
 const hostname = '127.0.0.1';
 const port = 3000;
 
 const handlers = {
   '/workers/add': workersAdd,
-  '/workers': workers
-  //'/workers/remove': workerRemove
+  '/workers': workers,
+  '/workers/remove': workerRemove
 };
 
 const server = http.createServer((req, res) => {
@@ -47,6 +40,9 @@ function getHandler(url) {
 }
 
 function workersAdd(req, res, payload, cb) {
+  const client = new net.Socket();
+  client.setEncoding('utf8');
+
   client.connect(sport, function() {
     console.log('Connected');
     client.write(`/process/create ${payload.dir} ${payload.x}`);
@@ -57,9 +53,16 @@ function workersAdd(req, res, payload, cb) {
     cb(null, {data: data});
   });
 
+  client.on('close', function() {
+    console.log('Connection closed');
+  });
+
 }
 
 function workers(req, res, payload, cb) {
+  const client = new net.Socket();
+  client.setEncoding('utf8');
+
   client.connect(sport, function() {
     console.log('Connected');
     client.write('/process/list');
@@ -69,7 +72,31 @@ function workers(req, res, payload, cb) {
     console.log(data);
     cb(null, {data: data});
   });
+
+  client.on('close', function() {
+    console.log('Connection closed');
+  });
 }
+
+function workerRemove(req, res, payload, cb) {
+  const client = new net.Socket();
+  client.setEncoding('utf8');
+
+  client.connect(sport, function() {
+    console.log('Connected');
+    client.write(`/process/kill ${payload.pid}`);
+  });
+
+  client.on('data', function(data) {
+    console.log(data);
+    cb(null, {data: data});
+  });
+
+  client.on('close', function() {
+    console.log('Connection closed');
+  });
+}
+
 
 function notFound(req, res, payload, cb) {
   cb({ code: 404, message: 'Not found'});
