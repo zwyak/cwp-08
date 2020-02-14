@@ -1,7 +1,7 @@
 // tcp-server.js
 const net = require('net');
 const path = require('path');
-const spawn = require('child_process').spawn;
+const child_process = require('child_process');
 
 const port = 8124;
 
@@ -18,10 +18,13 @@ const server = net.createServer((client) => {
 
     switch (req[0]) {
       case '/process/create':
-        const fileName = Date.now().toSting();
-        const child = spawn(`node ${path.join(req[1], fileName)} ${req[2]}`, {detached:true});
+        const fileName = Date.now();
+        const child = child_process.exec(`node worker.js ${path.join(req[1], fileName + '.json')} ${req[2]}`, (error, stdout, stderr) => {
+          if (error) throw error;
+        });
         workers.push(child);
         client.write(`Process ${child.pid} was started`);
+        client.close();
         break;
       case '/process/list':
         let processList = '';
@@ -29,6 +32,7 @@ const server = net.createServer((client) => {
           processList += item.pid.toString() + '\r\n'
         });
         client.write(processList);
+        client.close();
         break;
       case '/process/kill':
         let flag = false;
@@ -37,17 +41,18 @@ const server = net.createServer((client) => {
         });
         if (flag == false){
           client.write(`Process ${req[1]} wasn't found`);
+          client.close();
           break;
         }
         process.kill(req[1]);
         client.write(`Process ${req[1]} was stoped`);
+        client.close();
         break;
       default:
         client.write('Bad Request');
-        client.destroy();
+        client.close();
         break;
     }
-    client.write('\r\nHello!\r\nRegards,\r\nServer\r\n');
   });
 
   client.on('end', () => console.log('Client disconnected'));
