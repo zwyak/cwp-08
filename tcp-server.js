@@ -28,9 +28,13 @@ const server = net.createServer((client) => {
         break;
       case '/process/list':
         let processList = '';
-        workers.forEach((item, i) => {
-          processList += item.pid.toString() + ' '
-        });
+        if (workers.length > 0){
+          workers.forEach((item, i) => {
+            processList += item.pid.toString() + ' '
+          });
+        }else{
+          processList = 'Workers list is empty'
+        }
         client.write(processList);
         client.destroy();
         break;
